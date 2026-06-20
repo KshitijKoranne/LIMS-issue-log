@@ -1,0 +1,8 @@
+{
+  "fontStack": "new project; Hallmark Cobalt workbench tokens introduced",
+  "palette": "OKLCH cool near-white paper with restrained cobalt accent",
+  "motion": "motion-cut; transform and opacity only",
+  "spacing": "4pt token scale",
+  "framework": "Next.js App Router",
+  "scannedAt": "2026-06-20"
+}
