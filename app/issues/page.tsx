@@ -15,7 +15,6 @@ export default async function IssuesPage() {
       <div className="topbar">
         <div>
           <h1>Issues</h1>
-          <div className="topbar-meta">list and expand</div>
         </div>
       </div>
       {data.configured ? <IssuesList issues={data.issues} modules={data.modules} /> : <SetupState />}

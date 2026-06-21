@@ -16,7 +16,6 @@ export default async function NewIssuePage() {
       <div className="topbar">
         <div>
           <h1>New issue</h1>
-          <div className="topbar-meta">Vadodara / Vapi / Both</div>
         </div>
       </div>
       {data.configured ? (

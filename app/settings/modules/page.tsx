@@ -15,7 +15,6 @@ export default async function ModulesPage() {
       <div className="topbar">
         <div>
           <h1>Modules</h1>
-          <div className="topbar-meta">editable list</div>
         </div>
       </div>
       {data.configured ? <ModuleManager modules={data.modules} /> : <SetupState />}

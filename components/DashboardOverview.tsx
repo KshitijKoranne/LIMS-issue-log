@@ -1,5 +1,14 @@
 import type { IssueRecord } from "@/lib/types";
 
+const chartColors = [
+  "var(--color-open)",
+  "var(--color-ongoing)",
+  "var(--color-closed)",
+  "var(--color-accent)",
+  "var(--color-low)",
+  "var(--color-high)"
+];
+
 function countBy<T extends string>(issues: IssueRecord[], getKey: (issue: IssueRecord) => T | null | undefined) {
   return issues.reduce<Record<string, number>>((acc, issue) => {
     const key = getKey(issue) || "Unassigned";
@@ -34,8 +43,65 @@ function agingBuckets(issues: IssueRecord[]) {
   return buckets;
 }
 
-function BarList({ title, values }: { title: string; values: Record<string, number> }) {
-  const entries = Object.entries(values).sort((a, b) => b[1] - a[1]);
+function orderedEntries(values: Record<string, number>, order?: string[]) {
+  const entries = Object.entries(values);
+  if (!order) return entries.sort((a, b) => b[1] - a[1]);
+  const rank = new Map(order.map((item, index) => [item, index]));
+  return entries.sort((a, b) => (rank.get(a[0]) ?? 99) - (rank.get(b[0]) ?? 99));
+}
+
+function conicGradient(entries: [string, number][]) {
+  const total = entries.reduce((sum, [, count]) => sum + count, 0);
+  if (!total) return "var(--color-paper-2) 0deg 360deg";
+
+  let cursor = 0;
+  return entries
+    .map(([, count], index) => {
+      const next = cursor + (count / total) * 360;
+      const segment = `${chartColors[index % chartColors.length]} ${cursor}deg ${next}deg`;
+      cursor = next;
+      return segment;
+    })
+    .join(", ");
+}
+
+function DonutChart({ title, values, order }: { title: string; values: Record<string, number>; order?: string[] }) {
+  const entries = orderedEntries(values, order);
+  const total = entries.reduce((sum, [, count]) => sum + count, 0);
+
+  return (
+    <section className="panel dashboard-chart">
+      <div className="panel-header">
+        <h2 className="panel-title">{title}</h2>
+        <span className="topbar-meta">{total} total</span>
+      </div>
+      <div className="panel-body donut-layout">
+        <div className="donut-chart" style={{ background: `conic-gradient(${conicGradient(entries)})` }}>
+          <div className="donut-core">
+            <strong>{total}</strong>
+            <span>Issues</span>
+          </div>
+        </div>
+        <div className="chart-legend">
+          {entries.length ? (
+            entries.map(([label, count], index) => (
+              <div className="legend-row" key={label}>
+                <span className="legend-swatch" style={{ background: chartColors[index % chartColors.length] }} />
+                <span>{label}</span>
+                <strong>{count}</strong>
+              </div>
+            ))
+          ) : (
+            <div className="muted">No data</div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function BarChart({ title, values, order }: { title: string; values: Record<string, number>; order?: string[] }) {
+  const entries = orderedEntries(values, order);
   const max = Math.max(1, ...entries.map(([, count]) => count));
   return (
     <section className="panel dashboard-panel">
@@ -44,14 +110,20 @@ function BarList({ title, values }: { title: string; values: Record<string, numb
       </div>
       <div className="panel-body bar-list">
         {entries.some(([, count]) => count > 0) ? (
-          entries.map(([label, count]) => (
-            <div className="bar-row" key={label}>
+          entries.map(([label, count], index) => (
+            <div className="bar-row chart-bar-row" key={label}>
               <div className="bar-label">
                 <span>{label}</span>
                 <span>{count}</span>
               </div>
               <div className="bar-track">
-                <div className="bar-fill" style={{ width: `${Math.max(8, (count / max) * 100)}%` }} />
+                <div
+                  className="bar-fill"
+                  style={{
+                    background: chartColors[index % chartColors.length],
+                    width: `${Math.max(8, (count / max) * 100)}%`
+                  }}
+                />
               </div>
             </div>
           ))
@@ -69,12 +141,14 @@ export function DashboardOverview({ issues }: { issues: IssueRecord[] }) {
   const closed = issues.filter((issue) => issue.status === "Closed").length;
   const shared = issues.filter((issue) => issue.location === "Both").length;
   const oldestOpen = issues.filter((issue) => issue.status !== "Closed").reduce((max, issue) => Math.max(max, daysOpen(issue)), 0);
+  const statusValues = { Open: open, Ongoing: ongoing, Closed: closed };
+  const businessValues = countBy(issues, (issue) => issue.location);
 
   return (
     <div className="dashboard-grid">
       <section className="panel dashboard-hero">
         <div className="panel-header">
-          <h2 className="panel-title">Status</h2>
+          <h2 className="panel-title">Snapshot</h2>
           <span className="topbar-meta">{issues.length} total</span>
         </div>
         <div className="panel-body summary-grid dashboard-metrics">
@@ -92,19 +166,19 @@ export function DashboardOverview({ issues }: { issues: IssueRecord[] }) {
           </div>
           <div className="metric">
             <strong>{shared}</strong>
-            <span>Both BU</span>
+            <span>Shared</span>
           </div>
           <div className="metric">
             <strong>{oldestOpen}</strong>
-            <span>Oldest open days</span>
+            <span>Max open age</span>
           </div>
         </div>
       </section>
-      <BarList title="By business units" values={countBy(issues, (issue) => issue.location)} />
-      <BarList title="By module" values={countBy(issues, (issue) => issue.moduleName)} />
-      <BarList title="By priority" values={countBy(issues, (issue) => issue.priority)} />
-      <BarList title="Aging open issues" values={agingBuckets(issues)} />
-      <BarList title="By status" values={countBy(issues, (issue) => issue.status)} />
+      <DonutChart title="Status mix" values={statusValues} order={["Open", "Ongoing", "Closed"]} />
+      <DonutChart title="Business units" values={businessValues} order={["Vadodara", "Vapi", "Both"]} />
+      <BarChart title="Aging open issues" values={agingBuckets(issues)} />
+      <BarChart title="By priority" values={countBy(issues, (issue) => issue.priority)} order={["Critical", "High", "Medium", "Low"]} />
+      <BarChart title="By module" values={countBy(issues, (issue) => issue.moduleName)} />
     </div>
   );
 }

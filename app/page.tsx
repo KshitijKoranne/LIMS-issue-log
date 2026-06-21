@@ -15,7 +15,6 @@ export default async function HomePage() {
       <div className="topbar">
         <div>
           <h1>Dashboard</h1>
-          <div className="topbar-meta">Vadodara / Vapi / Both</div>
         </div>
         <div className="topbar-meta">{new Intl.DateTimeFormat("en-IN", { dateStyle: "medium" }).format(new Date())}</div>
       </div>
