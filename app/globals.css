@@ -323,6 +323,18 @@ a {
   max-width: 720px;
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .dashboard-grid {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
@@ -645,6 +657,85 @@ a {
   background: var(--color-accent);
 }
 
+.assistant-shell {
+  display: grid;
+  grid-template-rows: auto minmax(360px, 1fr) auto;
+  max-width: 980px;
+  min-height: calc(100vh - 128px);
+  overflow: hidden;
+}
+
+.assistant-messages {
+  display: grid;
+  align-content: start;
+  gap: var(--space-md);
+  overflow-y: auto;
+  padding: var(--space-md);
+  background: linear-gradient(180deg, var(--color-surface), var(--color-paper));
+}
+
+.assistant-message {
+  display: grid;
+  gap: var(--space-2xs);
+  max-width: min(720px, 92%);
+}
+
+.assistant-message.user {
+  justify-self: end;
+}
+
+.assistant-role {
+  color: var(--color-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+.assistant-message.user .assistant-role {
+  text-align: right;
+}
+
+.assistant-bubble {
+  border: var(--rule-thin) solid var(--color-rule);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  padding: var(--space-sm) var(--space-md);
+  white-space: pre-wrap;
+}
+
+.assistant-message.user .assistant-bubble {
+  border-color: var(--color-accent);
+  background: var(--color-ink);
+  color: var(--color-surface);
+}
+
+.assistant-composer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-sm);
+  align-items: end;
+  padding: var(--space-md);
+  border-top: var(--rule-thin) solid var(--color-rule);
+  background: var(--color-surface);
+}
+
+.assistant-composer textarea {
+  width: 100%;
+  min-height: 48px;
+  max-height: 160px;
+  resize: vertical;
+  border: var(--rule-thin) solid var(--color-rule);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-raised);
+  color: var(--color-ink);
+  padding: 0.7rem 0.78rem;
+}
+
+.assistant-composer textarea:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px oklch(58% 0.18 255 / 0.12);
+  outline: none;
+}
+
 .detail-stack,
 .attachment-grid,
 .module-list {
@@ -824,6 +915,14 @@ a {
 
   .summary-grid,
   .nav-stack {
+    grid-template-columns: 1fr;
+  }
+
+  .assistant-shell {
+    min-height: 620px;
+  }
+
+  .assistant-composer {
     grid-template-columns: 1fr;
   }
 

@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { ClipboardList, LayoutDashboard, Layers3, LogOut, PlusCircle } from "lucide-react";
+import { Bot, ClipboardList, LayoutDashboard, Layers3, LogOut, PlusCircle } from "lucide-react";
 import { logoutAction } from "@/app/login/actions";
 
-export function AppShell({ active, children }: { active: "dashboard" | "new" | "issues" | "modules"; children: React.ReactNode }) {
+export function AppShell({ active, children }: { active: "dashboard" | "new" | "issues" | "assistant" | "modules"; children: React.ReactNode }) {
   return (
     <div className="shell">
       <aside className="rail">
@@ -22,6 +22,10 @@ export function AppShell({ active, children }: { active: "dashboard" | "new" | "
           <Link className={`nav-link ${active === "issues" ? "active" : ""}`} href="/issues">
             <ClipboardList size={17} />
             Issues
+          </Link>
+          <Link className={`nav-link ${active === "assistant" ? "active" : ""}`} href="/assistant">
+            <Bot size={17} />
+            Assistant
           </Link>
           <Link className={`nav-link ${active === "modules" ? "active" : ""}`} href="/settings/modules">
             <Layers3 size={17} />
