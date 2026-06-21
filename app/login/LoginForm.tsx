@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useActionState } from "react";
 import { LockKeyhole } from "lucide-react";
 import { loginAction } from "./actions";
@@ -12,9 +13,12 @@ export function LoginForm() {
   return (
     <form action={formAction} className="panel login-card">
       <div className="panel-header">
-        <div>
-          <h1 className="panel-title">LIMS Issues</h1>
-          <div className="topbar-meta">private access</div>
+        <div className="login-brand">
+          <Image className="app-mark" src="/compliance.png" alt="" width={42} height={42} priority />
+          <div>
+            <h1 className="panel-title">LIMS Issues</h1>
+            <div className="topbar-meta">private access</div>
+          </div>
         </div>
         <LockKeyhole size={18} />
       </div>

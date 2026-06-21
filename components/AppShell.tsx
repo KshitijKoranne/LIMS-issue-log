@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
@@ -38,8 +39,11 @@ export function AppShell({ active, children }: { active: NavKey; children: React
     <div className="shell">
       <aside className="rail">
         <div className="wordmark">
-          <strong>LIMS Issues</strong>
-          <span>CSV rollout log</span>
+          <Image className="app-mark" src="/compliance.png" alt="" width={42} height={42} priority />
+          <div>
+            <strong>LIMS Issues</strong>
+            <span>CSV rollout log</span>
+          </div>
         </div>
         <nav className="nav-stack" aria-label="Primary">
           {navItems.map((item) => (
