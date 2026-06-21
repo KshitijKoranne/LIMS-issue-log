@@ -1,14 +1,20 @@
+import { Suspense } from "react";
 import { AppShell } from "@/components/AppShell";
 import { AssistantPanel } from "@/components/AssistantPanel";
+import { PanelLoading } from "@/components/PanelLoading";
 import { SetupState } from "@/components/SetupState";
 import { requireSession } from "@/lib/auth";
 import { getDashboardData } from "@/lib/data";
 
 export const dynamic = "force-dynamic";
 
+async function AssistantContent() {
+  const data = await getDashboardData();
+  return data.configured ? <AssistantPanel /> : <SetupState />;
+}
+
 export default async function AssistantPage() {
   await requireSession();
-  const data = await getDashboardData();
 
   return (
     <AppShell active="assistant">
@@ -17,7 +23,9 @@ export default async function AssistantPage() {
           <h1>Assistant</h1>
         </div>
       </div>
-      {data.configured ? <AssistantPanel /> : <SetupState />}
+      <Suspense fallback={<PanelLoading label="Loading assistant" />}>
+        <AssistantContent />
+      </Suspense>
     </AppShell>
   );
 }

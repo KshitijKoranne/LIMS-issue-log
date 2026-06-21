@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { ACCEPTED_IMAGE_TYPES, LOCATIONS, MAX_ATTACHMENT_BYTES, MAX_ATTACHMENTS_PER_SUBMISSION, PRIORITIES, STATUSES } from "@/lib/constants";
 import { getClient, ensureSchema, isDbConfigured } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
@@ -28,8 +28,19 @@ function dbMissing(): ActionState | null {
 }
 
 function revalidateIssueViews() {
+  revalidateTag("lims-data");
   revalidatePath("/");
   revalidatePath("/issues");
+  revalidatePath("/assistant");
+}
+
+function revalidateAllViews() {
+  revalidateTag("lims-data");
+  revalidatePath("/");
+  revalidatePath("/issues");
+  revalidatePath("/issues/new");
+  revalidatePath("/settings/modules");
+  revalidatePath("/assistant");
 }
 
 async function readAttachments(formData: FormData) {
@@ -230,10 +241,7 @@ export async function createModule(_: ActionState, formData: FormData): Promise<
     return { ok: false, message: "Module already exists." };
   }
 
-  revalidatePath("/");
-  revalidatePath("/issues");
-  revalidatePath("/issues/new");
-  revalidatePath("/settings/modules");
+  revalidateAllViews();
   return { ok: true, message: "Module added." };
 }
 
@@ -254,10 +262,7 @@ export async function renameModule(formData: FormData): Promise<ActionState> {
     args: [name, now(), id]
   });
 
-  revalidatePath("/");
-  revalidatePath("/issues");
-  revalidatePath("/issues/new");
-  revalidatePath("/settings/modules");
+  revalidateAllViews();
   return { ok: true, message: "Module renamed." };
 }
 
@@ -277,10 +282,7 @@ export async function archiveModule(formData: FormData): Promise<ActionState> {
     args: [now(), now(), id]
   });
 
-  revalidatePath("/");
-  revalidatePath("/issues");
-  revalidatePath("/issues/new");
-  revalidatePath("/settings/modules");
+  revalidateAllViews();
   return { ok: true, message: "Module archived." };
 }
 
@@ -300,9 +302,6 @@ export async function restoreModule(formData: FormData): Promise<ActionState> {
     args: [now(), id]
   });
 
-  revalidatePath("/");
-  revalidatePath("/issues");
-  revalidatePath("/issues/new");
-  revalidatePath("/settings/modules");
+  revalidateAllViews();
   return { ok: true, message: "Module restored." };
 }

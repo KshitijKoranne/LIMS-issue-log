@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { ensureSchema, getClient, isDbConfigured } from "./db";
 import type { AttachmentRecord, DashboardData, IssueRecord, ModuleRecord } from "./types";
 
@@ -59,11 +60,7 @@ function mapIssue(row: DbRow, attachments: AttachmentRecord[]): IssueRecord {
   };
 }
 
-export async function getDashboardData(): Promise<DashboardData> {
-  if (!isDbConfigured()) {
-    return { configured: false, issues: [], modules: [] };
-  }
-
+async function readDashboardData(): Promise<DashboardData> {
   await ensureSchema();
   const db = getClient();
   const [issueRows, moduleRows, attachmentRows] = await Promise.all([
@@ -97,12 +94,24 @@ export async function getDashboardData(): Promise<DashboardData> {
   };
 }
 
+const getCachedDashboardData = unstable_cache(readDashboardData, ["lims-dashboard-data"], {
+  revalidate: 30,
+  tags: ["lims-data"]
+});
+
+export async function getDashboardData(): Promise<DashboardData> {
+  if (!isDbConfigured()) {
+    return { configured: false, issues: [], modules: [] };
+  }
+
+  return getCachedDashboardData();
+}
+
 export async function getModules(): Promise<{ configured: boolean; modules: ModuleRecord[] }> {
   if (!isDbConfigured()) {
     return { configured: false, modules: [] };
   }
 
-  await ensureSchema();
-  const result = await getClient().execute("SELECT * FROM modules ORDER BY archived_at IS NOT NULL, lower(name) ASC");
-  return { configured: true, modules: result.rows.map((row) => mapModule(row as DbRow)) };
+  const data = await getDashboardData();
+  return { configured: data.configured, modules: data.modules };
 }

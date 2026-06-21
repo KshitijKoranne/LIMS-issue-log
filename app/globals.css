@@ -320,7 +320,7 @@ a {
 }
 
 .single-column {
-  max-width: 720px;
+  width: 100%;
 }
 
 .sr-only {
@@ -660,7 +660,7 @@ a {
 .assistant-shell {
   display: grid;
   grid-template-rows: auto minmax(360px, 1fr) auto;
-  max-width: 980px;
+  width: 100%;
   min-height: calc(100vh - 128px);
   overflow: hidden;
 }

@@ -7,7 +7,7 @@ import { askAssistant, type AssistantMessage } from "@/app/assistant/actions";
 const initialMessages: AssistantMessage[] = [
   {
     role: "assistant",
-    content: "Ask about logged issues, modules, status, priorities, business units, screenshots, or trends visible in this app."
+    content: "Ask about logged issues, modules, status, priorities, business units, screenshots, or trends."
   }
 ];
 
@@ -41,7 +41,6 @@ export function AssistantPanel() {
     <section className="panel assistant-shell">
       <div className="panel-header">
         <h2 className="panel-title">Issue assistant</h2>
-        <span className="topbar-meta">app data only</span>
       </div>
       <div className="assistant-messages" aria-live="polite">
         {messages.map((message, index) => (
