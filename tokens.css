@@ -10,6 +10,11 @@
   --color-control-hover: oklch(98.5% 0.011 248);
   --color-hover-tint: oklch(96.2% 0.014 248);
   --color-dropzone: oklch(96.5% 0.012 248);
+  --color-login-card: oklch(99% 0.006 248 / 0.92);
+  --color-login-scrim: oklch(10% 0.034 255 / 0.38);
+  --color-login-edge: oklch(10% 0.034 255 / 0.18);
+  --color-login-edge-strong: oklch(10% 0.034 255 / 0.24);
+  --color-login-vanta: oklch(18% 0.06 265);
   --color-surface: oklch(99% 0.006 248);
   --color-surface-raised: oklch(100% 0.004 248);
   --color-sheen: oklch(100% 0 0 / 0.9);

@@ -979,14 +979,43 @@ a {
 }
 
 .login-screen {
+  position: relative;
   display: grid;
   place-items: center;
   min-height: 100vh;
   padding: var(--space-lg);
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 28% 24%, var(--color-accent-soft), transparent 28rem),
+    linear-gradient(135deg, var(--color-login-vanta), var(--color-ink));
+}
+
+.login-screen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(circle at 50% 50%, transparent 0, var(--color-login-scrim) 70%),
+    linear-gradient(90deg, var(--color-login-edge), transparent 42%, var(--color-login-edge-strong));
+  pointer-events: none;
+}
+
+.login-vanta {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: var(--color-login-vanta);
 }
 
 .login-card {
+  position: relative;
+  z-index: 1;
   width: min(420px, 100%);
+  background: var(--color-login-card);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
 }
 
 .error {
