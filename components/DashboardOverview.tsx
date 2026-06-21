@@ -1,4 +1,5 @@
 import type { IssueRecord } from "@/lib/types";
+import type { CSSProperties } from "react";
 
 const chartColors = [
   "var(--color-open)",
@@ -85,7 +86,7 @@ function DonutChart({ title, values, order }: { title: string; values: Record<st
         <div className="chart-legend">
           {entries.length ? (
             entries.map(([label, count], index) => (
-              <div className="legend-row" key={label}>
+              <div className="legend-row" key={label} style={{ "--i": index } as CSSProperties}>
                 <span className="legend-swatch" style={{ background: chartColors[index % chartColors.length] }} />
                 <span>{label}</span>
                 <strong>{count}</strong>
@@ -111,7 +112,7 @@ function BarChart({ title, values, order }: { title: string; values: Record<stri
       <div className="panel-body bar-list">
         {entries.some(([, count]) => count > 0) ? (
           entries.map(([label, count], index) => (
-            <div className="bar-row chart-bar-row" key={label}>
+            <div className="bar-row chart-bar-row" key={label} style={{ "--i": index } as CSSProperties}>
               <div className="bar-label">
                 <span>{label}</span>
                 <span>{count}</span>
@@ -152,23 +153,23 @@ export function DashboardOverview({ issues }: { issues: IssueRecord[] }) {
           <span className="topbar-meta">{issues.length} total</span>
         </div>
         <div className="panel-body summary-grid dashboard-metrics">
-          <div className="metric">
+          <div className="metric" style={{ "--i": 0 } as CSSProperties}>
             <strong>{open}</strong>
             <span>Open</span>
           </div>
-          <div className="metric">
+          <div className="metric" style={{ "--i": 1 } as CSSProperties}>
             <strong>{ongoing}</strong>
             <span>Ongoing</span>
           </div>
-          <div className="metric">
+          <div className="metric" style={{ "--i": 2 } as CSSProperties}>
             <strong>{closed}</strong>
             <span>Closed</span>
           </div>
-          <div className="metric">
+          <div className="metric" style={{ "--i": 3 } as CSSProperties}>
             <strong>{shared}</strong>
             <span>Shared</span>
           </div>
-          <div className="metric">
+          <div className="metric" style={{ "--i": 4 } as CSSProperties}>
             <strong>{oldestOpen}</strong>
             <span>Max open age</span>
           </div>

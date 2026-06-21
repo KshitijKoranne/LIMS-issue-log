@@ -37,6 +37,7 @@ export function IssueForm({ modules }: { modules: ModuleRecord[] }) {
   const formRef = useRef<HTMLFormElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const [message, setMessage] = useState("");
+  const [fileCount, setFileCount] = useState(0);
   const [pending, startTransition] = useTransition();
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -55,6 +56,7 @@ export function IssueForm({ modules }: { modules: ModuleRecord[] }) {
       setMessage(result.message);
       if (result.ok) {
         formRef.current?.reset();
+        setFileCount(0);
         router.refresh();
       }
     });
@@ -107,12 +109,13 @@ export function IssueForm({ modules }: { modules: ModuleRecord[] }) {
         </div>
         <label className="dropzone" htmlFor="screenshots">
           <Paperclip size={18} />
-          <span>Screenshots</span>
+          <span>{fileCount ? `${fileCount} selected` : "Screenshots"}</span>
           <input
             accept="image/png,image/jpeg,image/webp"
             id="screenshots"
             multiple
             name="screenshots"
+            onChange={(event) => setFileCount(event.target.files?.length || 0)}
             ref={fileRef}
             style={{ display: "none" }}
             type="file"

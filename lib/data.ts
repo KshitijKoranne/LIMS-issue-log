@@ -38,6 +38,13 @@ function mapAttachment(row: DbRow): AttachmentRecord {
   };
 }
 
+function mapAttachmentMeta(row: DbRow): AttachmentRecord {
+  return {
+    ...mapAttachment(row),
+    dataBase64: ""
+  };
+}
+
 function mapIssue(row: DbRow, attachments: AttachmentRecord[]): IssueRecord {
   return {
     id: text(row.id),
@@ -73,10 +80,14 @@ async function readDashboardData(): Promise<DashboardData> {
       ORDER BY datetime(issues.updated_at) DESC
     `),
     db.execute("SELECT * FROM modules ORDER BY archived_at IS NOT NULL, lower(name) ASC"),
-    db.execute("SELECT * FROM issue_attachments ORDER BY datetime(created_at) DESC")
+    db.execute(`
+      SELECT id, issue_id, filename, mime_type, size_bytes, '' AS data_base64, created_at
+      FROM issue_attachments
+      ORDER BY datetime(created_at) DESC
+    `)
   ]);
 
-  const attachments = attachmentRows.rows.map((row) => mapAttachment(row as DbRow));
+  const attachments = attachmentRows.rows.map((row) => mapAttachmentMeta(row as DbRow));
   const attachmentMap = new Map<string, AttachmentRecord[]>();
   for (const attachment of attachments) {
     const current = attachmentMap.get(attachment.issueId) || [];
@@ -94,7 +105,29 @@ async function readDashboardData(): Promise<DashboardData> {
   };
 }
 
-const getCachedDashboardData = unstable_cache(readDashboardData, ["lims-dashboard-data"], {
+export async function getIssueAttachments(issueId: string): Promise<{ configured: boolean; attachments: AttachmentRecord[] }> {
+  if (!isDbConfigured()) {
+    return { configured: false, attachments: [] };
+  }
+
+  await ensureSchema();
+  const rows = await getClient().execute({
+    sql: `
+      SELECT id, issue_id, filename, mime_type, size_bytes, data_base64, created_at
+      FROM issue_attachments
+      WHERE issue_id = ?
+      ORDER BY datetime(created_at) DESC
+    `,
+    args: [issueId]
+  });
+
+  return {
+    configured: true,
+    attachments: rows.rows.map((row) => mapAttachment(row as DbRow))
+  };
+}
+
+const getCachedDashboardData = unstable_cache(readDashboardData, ["lims-dashboard-data-v2"], {
   revalidate: 30,
   tags: ["lims-data"]
 });

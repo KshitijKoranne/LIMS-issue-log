@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useTransition } from "react";
+import type { CSSProperties } from "react";
 import { Archive, RotateCcw, Save } from "lucide-react";
 import { archiveModule, createModule, renameModule, restoreModule } from "@/app/actions";
 import type { ModuleRecord } from "@/lib/types";
@@ -42,8 +43,13 @@ export function ModuleManager({ modules }: { modules: ModuleRecord[] }) {
         </div>
         <div className="panel-body module-list">
           {modules.length ? (
-            modules.map((module) => (
-              <form action={(formData) => submitAction(renameModule, formData)} className="module-item" key={module.id}>
+            modules.map((module, index) => (
+              <form
+                action={(formData) => submitAction(renameModule, formData)}
+                className="module-item"
+                key={module.id}
+                style={{ "--i": index } as CSSProperties}
+              >
                 <input name="id" type="hidden" value={module.id} />
                 <div className="field">
                   <label htmlFor={`module-${module.id}`}>{module.archivedAt ? "Archived" : "Active"}</label>

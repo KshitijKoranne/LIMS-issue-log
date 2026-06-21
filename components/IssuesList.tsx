@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import type { CSSProperties } from "react";
 import { ChevronDown, ChevronUp, Search } from "lucide-react";
 import type { IssueRecord, ModuleRecord } from "@/lib/types";
 import { IssueDetail } from "./IssueDetail";
@@ -81,10 +82,10 @@ export function IssuesList({ issues, modules }: { issues: IssueRecord[]; modules
       </div>
       {filteredIssues.length ? (
         <div className="issue-list">
-          {filteredIssues.map((issue) => {
+          {filteredIssues.map((issue, index) => {
             const expanded = expandedId === issue.id;
             return (
-              <article className={`issue-card ${expanded ? "expanded" : ""}`} key={issue.id}>
+              <article className={`issue-card ${expanded ? "expanded" : ""}`} key={issue.id} style={{ "--i": index } as CSSProperties}>
                 <button className="issue-card-main" onClick={() => setExpandedId(expanded ? null : issue.id)} type="button">
                   <span className="issue-id">{issue.id}</span>
                   <span className="issue-title">{issue.title}</span>

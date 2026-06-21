@@ -52,7 +52,7 @@ export function AssistantPanel() {
         {pending ? (
           <div className="assistant-message assistant">
             <div className="assistant-role">Assistant</div>
-            <div className="assistant-bubble muted">Checking app data...</div>
+            <div className="assistant-bubble muted">Reviewing entries...</div>
           </div>
         ) : null}
       </div>

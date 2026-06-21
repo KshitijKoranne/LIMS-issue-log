@@ -1,10 +1,10 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ImagePlus, Save, Trash2 } from "lucide-react";
-import { addAttachments, deleteAttachment, updateIssue } from "@/app/actions";
-import type { IssueRecord, ModuleRecord } from "@/lib/types";
+import { addAttachments, deleteAttachment, getIssueAttachments, updateIssue } from "@/app/actions";
+import type { AttachmentRecord, IssueRecord, ModuleRecord } from "@/lib/types";
 import { StatusChip } from "./StatusChip";
 
 async function compressImage(file: File) {
@@ -23,7 +23,37 @@ export function IssueDetail({ issue, modules }: { issue: IssueRecord | null; mod
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const [message, setMessage] = useState("");
+  const [attachments, setAttachments] = useState<AttachmentRecord[]>(issue?.attachments || []);
+  const [attachmentsLoading, setAttachmentsLoading] = useState(false);
   const [pending, startTransition] = useTransition();
+
+  useEffect(() => {
+    if (!issue) return;
+
+    let cancelled = false;
+    setAttachments(issue.attachments);
+    if (!issue.attachments.length) return;
+
+    setAttachmentsLoading(true);
+    getIssueAttachments(issue.id)
+      .then((result) => {
+        if (!cancelled && result.ok) {
+          setAttachments(result.attachments);
+        }
+        if (!cancelled && !result.ok) {
+          setMessage(result.message);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setAttachmentsLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [issue]);
 
   if (!issue) {
     return (
@@ -55,6 +85,10 @@ export function IssueDetail({ issue, modules }: { issue: IssueRecord | null; mod
       setMessage(result.message);
       if (result.ok) {
         event.currentTarget.reset();
+        const refreshed = await getIssueAttachments(currentIssue.id);
+        if (refreshed.ok) {
+          setAttachments(refreshed.attachments);
+        }
         router.refresh();
       }
     });
@@ -66,7 +100,10 @@ export function IssueDetail({ issue, modules }: { issue: IssueRecord | null; mod
     startTransition(async () => {
       const result = await deleteAttachment(data);
       setMessage(result.message);
-      if (result.ok) router.refresh();
+      if (result.ok) {
+        setAttachments((current) => current.filter((attachment) => attachment.id !== id));
+        router.refresh();
+      }
     });
   }
 
@@ -144,11 +181,22 @@ export function IssueDetail({ issue, modules }: { issue: IssueRecord | null; mod
           </button>
         </form>
 
-        {currentIssue.attachments.length ? (
+        {attachmentsLoading ? (
+          <div className="empty-state loading-state" aria-label="Loading screenshots" role="status">
+            <div className="skeleton-line" />
+            <div className="skeleton-line short" />
+          </div>
+        ) : null}
+
+        {attachments.length ? (
           <div className="attachment-grid">
-            {currentIssue.attachments.map((attachment) => (
+            {attachments.map((attachment) => (
               <div className="attachment" key={attachment.id}>
-                <img alt={attachment.filename} src={`data:${attachment.mimeType};base64,${attachment.dataBase64}`} />
+                {attachment.dataBase64 ? (
+                  <img alt={attachment.filename} src={`data:${attachment.mimeType};base64,${attachment.dataBase64}`} />
+                ) : (
+                  <div className="attachment-placeholder" aria-hidden="true" />
+                )}
                 <div>
                   <div className="issue-title">{attachment.filename}</div>
                   <div className="topbar-meta">{Math.round(attachment.sizeBytes / 1024)} KB</div>

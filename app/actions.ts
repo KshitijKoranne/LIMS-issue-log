@@ -3,8 +3,9 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { ACCEPTED_IMAGE_TYPES, LOCATIONS, MAX_ATTACHMENT_BYTES, MAX_ATTACHMENTS_PER_SUBMISSION, PRIORITIES, STATUSES } from "@/lib/constants";
 import { getClient, ensureSchema, isDbConfigured } from "@/lib/db";
+import { getIssueAttachments as readIssueAttachments } from "@/lib/data";
 import { requireSession } from "@/lib/auth";
-import type { ActionState, IssueStatus, Location, Priority } from "@/lib/types";
+import type { ActionState, AttachmentRecord, IssueStatus, Location, Priority } from "@/lib/types";
 
 function now() {
   return new Date().toISOString();
@@ -128,6 +129,24 @@ export async function createIssue(formData: FormData): Promise<ActionState> {
 
   revalidateIssueViews();
   return { ok: true, message: `${id} logged.` };
+}
+
+export async function getIssueAttachments(issueId: string): Promise<{ ok: boolean; message: string; attachments: AttachmentRecord[] }> {
+  await requireSession();
+  const normalizedIssueId = String(issueId || "").trim();
+  if (!normalizedIssueId) {
+    return { ok: false, message: "Issue is required.", attachments: [] };
+  }
+
+  try {
+    const result = await readIssueAttachments(normalizedIssueId);
+    if (!result.configured) {
+      return { ok: false, message: "Turso env vars are missing.", attachments: [] };
+    }
+    return { ok: true, message: "", attachments: result.attachments };
+  } catch {
+    return { ok: false, message: "Screenshots could not be loaded.", attachments: [] };
+  }
 }
 
 export async function updateIssue(formData: FormData): Promise<ActionState> {

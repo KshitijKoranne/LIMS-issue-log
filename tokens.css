@@ -5,16 +5,25 @@
 
   --color-paper: oklch(97.2% 0.008 248);
   --color-paper-2: oklch(94.8% 0.01 248);
+  --color-rail: oklch(95.8% 0.011 248);
+  --color-field-hover: oklch(98.3% 0.007 248);
+  --color-control-hover: oklch(98.5% 0.011 248);
+  --color-hover-tint: oklch(96.2% 0.014 248);
+  --color-dropzone: oklch(96.5% 0.012 248);
   --color-surface: oklch(99% 0.006 248);
   --color-surface-raised: oklch(100% 0.004 248);
+  --color-sheen: oklch(100% 0 0 / 0.9);
+  --color-sheen-soft: oklch(100% 0 0 / 0.86);
   --color-rule: oklch(86% 0.015 248);
   --color-rule-strong: oklch(76% 0.022 248);
+  --color-danger-rule: oklch(74% 0.11 28);
   --color-ink: oklch(20% 0.024 248);
   --color-muted: oklch(47% 0.026 248);
   --color-soft: oklch(63% 0.022 248);
   --color-accent: oklch(54% 0.19 255);
   --color-accent-soft: oklch(93% 0.035 255);
   --color-focus: oklch(58% 0.18 255);
+  --color-focus-soft: oklch(58% 0.18 255 / 0.12);
   --color-open: oklch(58% 0.18 29);
   --color-ongoing: oklch(59% 0.16 82);
   --color-closed: oklch(52% 0.14 160);
@@ -48,10 +57,14 @@
   --rule-thin: 1px;
   --shadow-hairline: 0 0 0 1px oklch(30% 0.02 248 / 0.06);
   --shadow-whisper: 0 1px 2px oklch(24% 0.02 248 / 0.06);
+  --shadow-raised: 0 14px 40px oklch(24% 0.02 248 / 0.08);
 
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
-  --ease-in-out: cubic-bezier(0.87, 0, 0.13, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-micro: 120ms;
+  --dur-short: 220ms;
+  --dur-long: 420ms;
   --dur-fast: 120ms;
   --dur-base: 180ms;
   --dur-slow: 260ms;

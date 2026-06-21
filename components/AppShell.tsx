@@ -45,7 +45,7 @@ export function AppShell({ active, children }: { active: NavKey; children: React
           {navItems.map((item) => (
             <Link
               aria-current={current === item.key ? "page" : undefined}
-              className={`nav-link ${current === item.key ? "active" : ""}`}
+              className={`nav-link ${current === item.key ? "active" : ""} ${optimisticActive === item.key ? "pending" : ""}`}
               href={item.href}
               key={item.key}
               onClick={() => setOptimisticActive(item.key)}
@@ -63,7 +63,11 @@ export function AppShell({ active, children }: { active: NavKey; children: React
           </button>
         </form>
       </aside>
-      <main className="main">{children}</main>
+      <main className="main">
+        <div className="route-stage" key={pathname}>
+          {children}
+        </div>
+      </main>
     </div>
   );
 }
