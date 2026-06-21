@@ -77,7 +77,7 @@ export function IssueForm({ modules }: { modules: ModuleRecord[] }) {
         </div>
         <div className="field-row">
           <div className="field">
-            <label htmlFor="location">Business</label>
+            <label htmlFor="location">Business units</label>
             <select id="location" name="location" defaultValue="Vadodara">
               <option>Vadodara</option>
               <option>Vapi</option>

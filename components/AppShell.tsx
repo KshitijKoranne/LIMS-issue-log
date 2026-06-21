@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { ClipboardList, Layers3, LogOut } from "lucide-react";
+import { ClipboardList, LayoutDashboard, Layers3, LogOut, PlusCircle } from "lucide-react";
 import { logoutAction } from "@/app/login/actions";
 
-export function AppShell({ active, children }: { active: "issues" | "modules"; children: React.ReactNode }) {
+export function AppShell({ active, children }: { active: "dashboard" | "new" | "issues" | "modules"; children: React.ReactNode }) {
   return (
     <div className="shell">
       <aside className="rail">
@@ -11,7 +11,15 @@ export function AppShell({ active, children }: { active: "issues" | "modules"; c
           <span>CSV rollout log</span>
         </div>
         <nav className="nav-stack" aria-label="Primary">
-          <Link className={`nav-link ${active === "issues" ? "active" : ""}`} href="/">
+          <Link className={`nav-link ${active === "dashboard" ? "active" : ""}`} href="/">
+            <LayoutDashboard size={17} />
+            Dashboard
+          </Link>
+          <Link className={`nav-link ${active === "new" ? "active" : ""}`} href="/issues/new">
+            <PlusCircle size={17} />
+            New issue
+          </Link>
+          <Link className={`nav-link ${active === "issues" ? "active" : ""}`} href="/issues">
             <ClipboardList size={17} />
             Issues
           </Link>

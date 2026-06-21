@@ -1,5 +1,5 @@
 import { AppShell } from "@/components/AppShell";
-import { DashboardClient } from "@/components/DashboardClient";
+import { DashboardOverview } from "@/components/DashboardOverview";
 import { SetupState } from "@/components/SetupState";
 import { requireSession } from "@/lib/auth";
 import { getDashboardData } from "@/lib/data";
@@ -11,15 +11,15 @@ export default async function HomePage() {
   const data = await getDashboardData();
 
   return (
-    <AppShell active="issues">
+    <AppShell active="dashboard">
       <div className="topbar">
         <div>
-          <h1>LIMS issue log</h1>
+          <h1>Dashboard</h1>
           <div className="topbar-meta">Vadodara / Vapi / Both</div>
         </div>
         <div className="topbar-meta">{new Intl.DateTimeFormat("en-IN", { dateStyle: "medium" }).format(new Date())}</div>
       </div>
-      {data.configured ? <DashboardClient issues={data.issues} modules={data.modules} /> : <SetupState />}
+      {data.configured ? <DashboardOverview issues={data.issues} /> : <SetupState />}
     </AppShell>
   );
 }

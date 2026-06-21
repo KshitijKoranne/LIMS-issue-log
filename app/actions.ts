@@ -27,6 +27,11 @@ function dbMissing(): ActionState | null {
   return isDbConfigured() ? null : { ok: false, message: "Turso env vars are missing." };
 }
 
+function revalidateIssueViews() {
+  revalidatePath("/");
+  revalidatePath("/issues");
+}
+
 async function readAttachments(formData: FormData) {
   const files = formData.getAll("attachments").filter((value): value is File => value instanceof File && value.size > 0);
   const accepted = files.slice(0, MAX_ATTACHMENTS_PER_SUBMISSION);
@@ -110,7 +115,7 @@ export async function createIssue(formData: FormData): Promise<ActionState> {
     });
   }
 
-  revalidatePath("/");
+  revalidateIssueViews();
   return { ok: true, message: `${id} logged.` };
 }
 
@@ -150,7 +155,7 @@ export async function updateIssue(formData: FormData): Promise<ActionState> {
     args: [title, description, status, priority, resolvedModuleId, moduleNameSnapshot, timestamp, closedAt, id]
   });
 
-  revalidatePath("/");
+  revalidateIssueViews();
   return { ok: true, message: `${id} updated.` };
 }
 
@@ -184,7 +189,7 @@ export async function addAttachments(formData: FormData): Promise<ActionState> {
   }
 
   await db.execute({ sql: "UPDATE issues SET updated_at = ? WHERE id = ?", args: [now(), issueId] });
-  revalidatePath("/");
+  revalidateIssueViews();
   return { ok: true, message: "Screenshots added." };
 }
 
@@ -200,7 +205,7 @@ export async function deleteAttachment(formData: FormData): Promise<ActionState>
 
   await ensureSchema();
   await getClient().execute({ sql: "DELETE FROM issue_attachments WHERE id = ?", args: [id] });
-  revalidatePath("/");
+  revalidateIssueViews();
   return { ok: true, message: "Screenshot deleted." };
 }
 
@@ -226,6 +231,8 @@ export async function createModule(_: ActionState, formData: FormData): Promise<
   }
 
   revalidatePath("/");
+  revalidatePath("/issues");
+  revalidatePath("/issues/new");
   revalidatePath("/settings/modules");
   return { ok: true, message: "Module added." };
 }
@@ -248,6 +255,8 @@ export async function renameModule(formData: FormData): Promise<ActionState> {
   });
 
   revalidatePath("/");
+  revalidatePath("/issues");
+  revalidatePath("/issues/new");
   revalidatePath("/settings/modules");
   return { ok: true, message: "Module renamed." };
 }
@@ -269,6 +278,8 @@ export async function archiveModule(formData: FormData): Promise<ActionState> {
   });
 
   revalidatePath("/");
+  revalidatePath("/issues");
+  revalidatePath("/issues/new");
   revalidatePath("/settings/modules");
   return { ok: true, message: "Module archived." };
 }
@@ -290,6 +301,8 @@ export async function restoreModule(formData: FormData): Promise<ActionState> {
   });
 
   revalidatePath("/");
+  revalidatePath("/issues");
+  revalidatePath("/issues/new");
   revalidatePath("/settings/modules");
   return { ok: true, message: "Module restored." };
 }
