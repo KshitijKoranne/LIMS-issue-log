@@ -71,6 +71,34 @@ async function readAttachments(formData: FormData) {
   );
 }
 
+async function resolveModule(moduleId: string | null, activeOnly: boolean) {
+  if (!moduleId) {
+    return { id: null, name: null };
+  }
+
+  const result = await getClient().execute({
+    sql: activeOnly ? "SELECT id, name FROM modules WHERE id = ? AND archived_at IS NULL" : "SELECT id, name FROM modules WHERE id = ?",
+    args: [moduleId]
+  });
+
+  const row = result.rows[0];
+  return {
+    id: row?.id ? String(row.id) : null,
+    name: row?.name ? String(row.name) : null
+  };
+}
+
+async function issueExists(issueId: string) {
+  const result = await getClient().execute({ sql: "SELECT id FROM issues WHERE id = ?", args: [issueId] });
+  return Boolean(result.rows.length);
+}
+
+async function nextIssueId() {
+  const sequence = await getClient().execute("UPDATE issue_sequence SET next_value = next_value + 1 WHERE id = 'issue' RETURNING next_value - 1 AS issued_value");
+  const nextValue = Number(sequence.rows[0]?.issued_value || 1);
+  return formatIssueId(nextValue);
+}
+
 export async function createIssue(formData: FormData): Promise<ActionState> {
   await requireSession();
   const missing = dbMissing();
@@ -88,11 +116,10 @@ export async function createIssue(formData: FormData): Promise<ActionState> {
 
   await ensureSchema();
   const db = getClient();
-  const moduleResult = moduleId
-    ? await db.execute({ sql: "SELECT id, name FROM modules WHERE id = ? AND archived_at IS NULL", args: [moduleId] })
-    : null;
-  const resolvedModuleId = moduleResult?.rows[0]?.id ? String(moduleResult.rows[0].id) : null;
-  const moduleNameSnapshot = moduleResult?.rows[0]?.name ? String(moduleResult.rows[0].name) : null;
+  const module = await resolveModule(moduleId, true);
+  if (moduleId && !module.id) {
+    return { ok: false, message: "Selected module is unavailable." };
+  }
 
   let attachments;
   try {
@@ -101,30 +128,32 @@ export async function createIssue(formData: FormData): Promise<ActionState> {
     return { ok: false, message: error instanceof Error ? error.message : "Attachment failed." };
   }
 
-  const sequence = await db.execute("SELECT next_value FROM issue_sequence WHERE id = 'issue'");
-  const nextValue = Number(sequence.rows[0]?.next_value || 1);
-  const id = formatIssueId(nextValue);
+  const id = await nextIssueId();
   const timestamp = now();
 
-  await db.execute({ sql: "UPDATE issue_sequence SET next_value = ? WHERE id = 'issue'", args: [nextValue + 1] });
-  await db.execute({
-    sql: `
-      INSERT INTO issues (
-        id, title, description, status, location, module_id, module_name_snapshot, priority,
-        created_at, updated_at, closed_at
-      ) VALUES (?, ?, ?, 'Open', ?, ?, ?, ?, ?, ?, NULL)
-    `,
-    args: [id, title, description, location, resolvedModuleId, moduleNameSnapshot, priority, timestamp, timestamp]
-  });
-
-  for (const attachment of attachments) {
+  try {
     await db.execute({
       sql: `
-        INSERT INTO issue_attachments (id, issue_id, filename, mime_type, size_bytes, data_base64, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO issues (
+          id, title, description, status, location, module_id, module_name_snapshot, priority,
+          created_at, updated_at, closed_at
+        ) VALUES (?, ?, ?, 'Open', ?, ?, ?, ?, ?, ?, NULL)
       `,
-      args: [attachment.id, id, attachment.filename, attachment.mimeType, attachment.sizeBytes, attachment.dataBase64, attachment.createdAt]
+      args: [id, title, description, location, module.id, module.name, priority, timestamp, timestamp]
     });
+
+    for (const attachment of attachments) {
+      await db.execute({
+        sql: `
+          INSERT INTO issue_attachments (id, issue_id, filename, mime_type, size_bytes, data_base64, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?)
+        `,
+        args: [attachment.id, id, attachment.filename, attachment.mimeType, attachment.sizeBytes, attachment.dataBase64, attachment.createdAt]
+      });
+    }
+  } catch (error) {
+    console.error("Issue creation failed", error);
+    return { ok: false, message: "Issue could not be saved." };
   }
 
   revalidateIssueViews();
@@ -177,24 +206,29 @@ export async function updateIssue(formData: FormData): Promise<ActionState> {
     return { ok: false, message: `${id} was not found.` };
   }
 
-  const moduleResult = moduleId
-    ? await db.execute({ sql: "SELECT id, name FROM modules WHERE id = ? AND archived_at IS NULL", args: [moduleId] })
-    : null;
-  const resolvedModuleId = moduleResult?.rows[0]?.id ? String(moduleResult.rows[0].id) : null;
-  const moduleNameSnapshot = moduleResult?.rows[0]?.name ? String(moduleResult.rows[0].name) : null;
+  const module = await resolveModule(moduleId, false);
+  if (moduleId && !module.id) {
+    return { ok: false, message: "Selected module is unavailable." };
+  }
+
   const timestamp = now();
   const existingClosedAt = existingIssue.rows[0]?.closed_at ? String(existingIssue.rows[0].closed_at) : null;
   const closedAt = status === "Closed" ? existingClosedAt || timestamp : null;
 
-  await db.execute({
-    sql: `
-      UPDATE issues
-      SET title = ?, description = ?, status = ?, location = ?, priority = ?, module_id = ?,
-          module_name_snapshot = ?, updated_at = ?, closed_at = ?
-      WHERE id = ?
-    `,
-    args: [title, description, status, location, priority, resolvedModuleId, moduleNameSnapshot, timestamp, closedAt, id]
-  });
+  try {
+    await db.execute({
+      sql: `
+        UPDATE issues
+        SET title = ?, description = ?, status = ?, location = ?, priority = ?, module_id = ?,
+            module_name_snapshot = ?, updated_at = ?, closed_at = ?
+        WHERE id = ?
+      `,
+      args: [title, description, status, location, priority, module.id, module.name, timestamp, closedAt, id]
+    });
+  } catch (error) {
+    console.error("Issue update failed", error);
+    return { ok: false, message: "Issue could not be updated." };
+  }
 
   revalidateIssueViews();
   return { ok: true, message: `${id} updated.` };
@@ -217,19 +251,33 @@ export async function addAttachments(formData: FormData): Promise<ActionState> {
     return { ok: false, message: error instanceof Error ? error.message : "Attachment failed." };
   }
 
-  await ensureSchema();
-  const db = getClient();
-  for (const attachment of attachments) {
-    await db.execute({
-      sql: `
-        INSERT INTO issue_attachments (id, issue_id, filename, mime_type, size_bytes, data_base64, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-      `,
-      args: [attachment.id, issueId, attachment.filename, attachment.mimeType, attachment.sizeBytes, attachment.dataBase64, attachment.createdAt]
-    });
+  if (!attachments.length) {
+    return { ok: false, message: "Select at least one screenshot." };
   }
 
-  await db.execute({ sql: "UPDATE issues SET updated_at = ? WHERE id = ?", args: [now(), issueId] });
+  await ensureSchema();
+  const db = getClient();
+  if (!(await issueExists(issueId))) {
+    return { ok: false, message: `${issueId} was not found.` };
+  }
+
+  try {
+    for (const attachment of attachments) {
+      await db.execute({
+        sql: `
+          INSERT INTO issue_attachments (id, issue_id, filename, mime_type, size_bytes, data_base64, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?)
+        `,
+        args: [attachment.id, issueId, attachment.filename, attachment.mimeType, attachment.sizeBytes, attachment.dataBase64, attachment.createdAt]
+      });
+    }
+
+    await db.execute({ sql: "UPDATE issues SET updated_at = ? WHERE id = ?", args: [now(), issueId] });
+  } catch (error) {
+    console.error("Attachment upload failed", error);
+    return { ok: false, message: "Screenshots could not be saved." };
+  }
+
   revalidateIssueViews();
   return { ok: true, message: "Screenshots added." };
 }
@@ -245,6 +293,11 @@ export async function deleteAttachment(formData: FormData): Promise<ActionState>
   }
 
   await ensureSchema();
+  const attachment = await getClient().execute({ sql: "SELECT id FROM issue_attachments WHERE id = ?", args: [id] });
+  if (!attachment.rows.length) {
+    return { ok: false, message: "Screenshot was not found." };
+  }
+
   await getClient().execute({ sql: "DELETE FROM issue_attachments WHERE id = ?", args: [id] });
   revalidateIssueViews();
   return { ok: true, message: "Screenshot deleted." };
@@ -287,10 +340,14 @@ export async function renameModule(formData: FormData): Promise<ActionState> {
   }
 
   await ensureSchema();
-  await getClient().execute({
-    sql: "UPDATE modules SET name = ?, updated_at = ? WHERE id = ?",
-    args: [name, now(), id]
-  });
+  try {
+    await getClient().execute({
+      sql: "UPDATE modules SET name = ?, updated_at = ? WHERE id = ?",
+      args: [name, now(), id]
+    });
+  } catch {
+    return { ok: false, message: "Module name is already in use." };
+  }
 
   revalidateAllViews();
   return { ok: true, message: "Module renamed." };
