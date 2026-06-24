@@ -66,6 +66,11 @@ function conicGradient(entries: [string, number][]) {
     .join(", ");
 }
 
+function barWidth(count: number, max: number) {
+  if (count <= 0) return "0%";
+  return `${Math.max(8, (count / max) * 100)}%`;
+}
+
 function DonutChart({ title, values, order }: { title: string; values: Record<string, number>; order?: string[] }) {
   const entries = orderedEntries(values, order);
   const total = entries.reduce((sum, [, count]) => sum + count, 0);
@@ -122,7 +127,7 @@ function BarChart({ title, values, order }: { title: string; values: Record<stri
                   className="bar-fill"
                   style={{
                     background: chartColors[index % chartColors.length],
-                    width: `${Math.max(8, (count / max) * 100)}%`
+                    width: barWidth(count, max)
                   }}
                 />
               </div>
