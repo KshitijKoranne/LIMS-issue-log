@@ -15,6 +15,11 @@ function daysOpen(issue: IssueRecord) {
   return Math.max(0, Math.floor((end.getTime() - new Date(issue.createdAt).getTime()) / 86_400_000));
 }
 
+function barWidth(count: number, max: number) {
+  if (count <= 0) return "0%";
+  return `${Math.max(8, (count / max) * 100)}%`;
+}
+
 function BarList({ values }: { values: Record<string, number> }) {
   const entries = Object.entries(values).sort((a, b) => b[1] - a[1]);
   const max = Math.max(1, ...entries.map(([, count]) => count));
@@ -28,7 +33,7 @@ function BarList({ values }: { values: Record<string, number> }) {
               <span>{count}</span>
             </div>
             <div className="bar-track">
-              <div className="bar-fill" style={{ width: `${Math.max(8, (count / max) * 100)}%` }} />
+              <div className="bar-fill" style={{ width: barWidth(count, max) }} />
             </div>
           </div>
         ))
