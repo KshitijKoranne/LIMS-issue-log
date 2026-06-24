@@ -31,6 +31,7 @@ export function IssueDetail({ issue, modules }: { issue: IssueRecord | null; mod
     if (!issue) return;
 
     let cancelled = false;
+    setMessage("");
     setAttachments(issue.attachments);
     if (!issue.attachments.length) return;
 
@@ -120,56 +121,66 @@ export function IssueDetail({ issue, modules }: { issue: IssueRecord | null; mod
         <form action={submitUpdate} className="form-grid">
           <input name="id" type="hidden" value={currentIssue.id} />
           <div className="field">
-            <label htmlFor="detailTitle">Title</label>
-            <input id="detailTitle" name="title" defaultValue={currentIssue.title} required />
+            <label htmlFor={`detailTitle-${currentIssue.id}`}>Title</label>
+            <input id={`detailTitle-${currentIssue.id}`} name="title" defaultValue={currentIssue.title} required />
           </div>
           <div className="field">
-            <label htmlFor="detailDescription">Issue</label>
-            <textarea id="detailDescription" name="description" defaultValue={currentIssue.description} required />
+            <label htmlFor={`detailDescription-${currentIssue.id}`}>Issue</label>
+            <textarea id={`detailDescription-${currentIssue.id}`} name="description" defaultValue={currentIssue.description} required />
           </div>
           <div className="field-row">
             <div className="field">
-              <label htmlFor="detailStatus">Status</label>
-              <select id="detailStatus" name="status" defaultValue={currentIssue.status}>
+              <label htmlFor={`detailStatus-${currentIssue.id}`}>Status</label>
+              <select id={`detailStatus-${currentIssue.id}`} name="status" defaultValue={currentIssue.status}>
                 <option>Open</option>
                 <option>Ongoing</option>
                 <option>Closed</option>
               </select>
             </div>
             <div className="field">
-              <label htmlFor="detailPriority">Priority</label>
-              <select id="detailPriority" name="priority" defaultValue={currentIssue.priority}>
+              <label htmlFor={`detailLocation-${currentIssue.id}`}>Business units</label>
+              <select id={`detailLocation-${currentIssue.id}`} name="location" defaultValue={currentIssue.location}>
+                <option>Vadodara</option>
+                <option>Vapi</option>
+                <option>Both</option>
+              </select>
+            </div>
+          </div>
+          <div className="field-row">
+            <div className="field">
+              <label htmlFor={`detailPriority-${currentIssue.id}`}>Priority</label>
+              <select id={`detailPriority-${currentIssue.id}`} name="priority" defaultValue={currentIssue.priority}>
                 <option>Low</option>
                 <option>Medium</option>
                 <option>High</option>
                 <option>Critical</option>
               </select>
             </div>
-          </div>
-          <div className="field">
-            <label htmlFor="detailModule">Module</label>
-            <select id="detailModule" name="moduleId" defaultValue={currentIssue.moduleId || ""}>
-              <option value="">Unassigned</option>
-              {modules.map((module) => (
-                <option key={module.id} value={module.id}>
-                  {module.name}
-                </option>
-              ))}
-            </select>
+            <div className="field">
+              <label htmlFor={`detailModule-${currentIssue.id}`}>Module</label>
+              <select id={`detailModule-${currentIssue.id}`} name="moduleId" defaultValue={currentIssue.moduleId || ""}>
+                <option value="">Unassigned</option>
+                {modules.map((module) => (
+                  <option key={module.id} value={module.id}>
+                    {module.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
           <button className="button full" disabled={pending} type="submit">
             <Save size={16} />
-            Save
+            Save changes
           </button>
         </form>
 
         <form className="form-grid" onSubmit={submitAttachments}>
-          <label className="dropzone" htmlFor="detailScreenshots">
+          <label className="dropzone" htmlFor={`detailScreenshots-${currentIssue.id}`}>
             <ImagePlus size={18} />
             <span>Add screenshots</span>
             <input
               accept="image/png,image/jpeg,image/webp"
-              id="detailScreenshots"
+              id={`detailScreenshots-${currentIssue.id}`}
               multiple
               ref={fileRef}
               style={{ display: "none" }}
