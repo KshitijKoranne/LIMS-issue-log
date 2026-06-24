@@ -19,8 +19,10 @@ function countBy<T extends string>(issues: IssueRecord[], getKey: (issue: IssueR
 }
 
 function daysOpen(issue: IssueRecord) {
-  const end = issue.closedAt ? new Date(issue.closedAt) : new Date();
-  return Math.max(0, Math.floor((end.getTime() - new Date(issue.createdAt).getTime()) / 86_400_000));
+  const start = new Date(issue.createdAt).getTime();
+  const end = issue.closedAt ? new Date(issue.closedAt).getTime() : Date.now();
+  if (!Number.isFinite(start) || !Number.isFinite(end)) return 0;
+  return Math.max(0, Math.floor((end - start) / 86_400_000));
 }
 
 function agingBuckets(issues: IssueRecord[]) {
