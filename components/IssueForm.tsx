@@ -11,25 +11,31 @@ async function compressImage(file: File) {
     return file;
   }
 
-  const bitmap = await createImageBitmap(file);
-  const maxSide = 1600;
-  const ratio = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.round(bitmap.width * ratio);
-  canvas.height = Math.round(bitmap.height * ratio);
-  const context = canvas.getContext("2d");
-  if (!context) {
+  try {
+    const bitmap = await createImageBitmap(file);
+    const maxSide = 1600;
+    const ratio = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bitmap.width * ratio);
+    canvas.height = Math.round(bitmap.height * ratio);
+    const context = canvas.getContext("2d");
+    if (!context) {
+      bitmap.close();
+      return file;
+    }
+
+    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close();
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/webp", 0.78));
+    if (!blob) {
+      return file;
+    }
+
+    const filename = file.name.replace(/\.[^.]+$/, ".webp");
+    return new File([blob], filename, { type: "image/webp" });
+  } catch {
     return file;
   }
-
-  context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/webp", 0.78));
-  if (!blob) {
-    return file;
-  }
-
-  const filename = file.name.replace(/\.[^.]+$/, ".webp");
-  return new File([blob], filename, { type: "image/webp" });
 }
 
 export function IssueForm({ modules }: { modules: ModuleRecord[] }) {
