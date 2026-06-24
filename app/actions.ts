@@ -158,6 +158,7 @@ export async function updateIssue(formData: FormData): Promise<ActionState> {
   const title = normalizeText(formData.get("title"));
   const description = normalizeText(formData.get("description"));
   const status = asEnum(formData.get("status"), STATUSES, "Open") as IssueStatus;
+  const location = asEnum(formData.get("location"), LOCATIONS, "Vadodara") as Location;
   const priority = asEnum(formData.get("priority"), PRIORITIES, "Medium") as Priority;
   const moduleId = normalizeText(formData.get("moduleId")) || null;
 
@@ -167,22 +168,32 @@ export async function updateIssue(formData: FormData): Promise<ActionState> {
 
   await ensureSchema();
   const db = getClient();
+  const existingIssue = await db.execute({
+    sql: "SELECT closed_at FROM issues WHERE id = ?",
+    args: [id]
+  });
+
+  if (!existingIssue.rows.length) {
+    return { ok: false, message: `${id} was not found.` };
+  }
+
   const moduleResult = moduleId
     ? await db.execute({ sql: "SELECT id, name FROM modules WHERE id = ? AND archived_at IS NULL", args: [moduleId] })
     : null;
   const resolvedModuleId = moduleResult?.rows[0]?.id ? String(moduleResult.rows[0].id) : null;
   const moduleNameSnapshot = moduleResult?.rows[0]?.name ? String(moduleResult.rows[0].name) : null;
   const timestamp = now();
-  const closedAt = status === "Closed" ? timestamp : null;
+  const existingClosedAt = existingIssue.rows[0]?.closed_at ? String(existingIssue.rows[0].closed_at) : null;
+  const closedAt = status === "Closed" ? existingClosedAt || timestamp : null;
 
   await db.execute({
     sql: `
       UPDATE issues
-      SET title = ?, description = ?, status = ?, priority = ?, module_id = ?,
+      SET title = ?, description = ?, status = ?, location = ?, priority = ?, module_id = ?,
           module_name_snapshot = ?, updated_at = ?, closed_at = ?
       WHERE id = ?
     `,
-    args: [title, description, status, priority, resolvedModuleId, moduleNameSnapshot, timestamp, closedAt, id]
+    args: [title, description, status, location, priority, resolvedModuleId, moduleNameSnapshot, timestamp, closedAt, id]
   });
 
   revalidateIssueViews();
