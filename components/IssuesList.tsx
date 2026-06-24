@@ -98,10 +98,6 @@ export function IssuesList({ issues, modules }: { issues: IssueRecord[]; modules
                 </button>
                 {expanded ? (
                   <div className="issue-expanded">
-                    <button className="button" onClick={() => setExpandedId(null)} type="button">
-                      <ChevronUp size={16} />
-                      Collapse
-                    </button>
                     <IssueDetail issue={issue} modules={activeModules} />
                   </div>
                 ) : null}
