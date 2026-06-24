@@ -20,7 +20,6 @@ export function IssuesList({ issues, modules }: { issues: IssueRecord[]; modules
   const [moduleId, setModuleId] = useState<FilterValue>("All");
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const activeModules = useMemo(() => modules.filter((module) => !module.archivedAt), [modules]);
   const filteredIssues = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return issues.filter((issue) => {
@@ -72,7 +71,7 @@ export function IssuesList({ issues, modules }: { issues: IssueRecord[]; modules
           <label htmlFor="moduleFilter">Module</label>
           <select id="moduleFilter" value={moduleId} onChange={(event) => setModuleId(event.target.value)}>
             <option>All</option>
-            {activeModules.map((module) => (
+            {modules.map((module) => (
               <option key={module.id} value={module.id}>
                 {module.name}
               </option>
@@ -98,7 +97,7 @@ export function IssuesList({ issues, modules }: { issues: IssueRecord[]; modules
                 </button>
                 {expanded ? (
                   <div className="issue-expanded">
-                    <IssueDetail issue={issue} modules={activeModules} />
+                    <IssueDetail issue={issue} modules={modules} />
                   </div>
                 ) : null}
               </article>
