@@ -1,4 +1,3 @@
-import { unstable_cache } from "next/cache";
 import { ensureSchema, getClient, isDbConfigured } from "./db";
 import type { AttachmentRecord, DashboardData, IssueRecord, ModuleRecord } from "./types";
 
@@ -127,17 +126,12 @@ export async function getIssueAttachments(issueId: string): Promise<{ configured
   };
 }
 
-const getCachedDashboardData = unstable_cache(readDashboardData, ["lims-dashboard-data-v2"], {
-  revalidate: 30,
-  tags: ["lims-data"]
-});
-
 export async function getDashboardData(): Promise<DashboardData> {
   if (!isDbConfigured()) {
     return { configured: false, issues: [], modules: [] };
   }
 
-  return getCachedDashboardData();
+  return readDashboardData();
 }
 
 export async function getModules(): Promise<{ configured: boolean; modules: ModuleRecord[] }> {
