@@ -1,8 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import type { CSSProperties } from "react";
-import { ChevronDown, ChevronUp, Search } from "lucide-react";
+import { useMemo, useState, useTransition } from "react";
+import type { CSSProperties, KeyboardEvent, MouseEvent } from "react";
+import { useRouter } from "next/navigation";
+import { CheckCircle2, ChevronDown, ChevronUp, Search } from "lucide-react";
+import { closeIssue } from "@/app/actions";
 import type { IssueRecord, ModuleRecord } from "@/lib/types";
 import { IssueDetail } from "./IssueDetail";
 import { StatusChip } from "./StatusChip";
@@ -14,11 +16,14 @@ function formatDate(value: string) {
 }
 
 export function IssuesList({ issues, modules }: { issues: IssueRecord[]; modules: ModuleRecord[] }) {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<FilterValue>("All");
   const [location, setLocation] = useState<FilterValue>("All");
   const [moduleId, setModuleId] = useState<FilterValue>("All");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [closingId, setClosingId] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
 
   const filteredIssues = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -31,9 +36,35 @@ export function IssuesList({ issues, modules }: { issues: IssueRecord[]; modules
       const matchesStatus = status === "All" || issue.status === status;
       const matchesLocation = location === "All" || issue.location === location;
       const matchesModule = moduleId === "All" || issue.moduleId === moduleId;
-      return matchesQuery && matchesStatus && matchesLocation && matchesModule;
+      return matchesQuery && matchesLocation && matchesModule && matchesStatus;
     });
   }, [issues, location, moduleId, query, status]);
+
+  function toggleIssue(issueId: string) {
+    setExpandedId((current) => (current === issueId ? null : issueId));
+  }
+
+  function handleRowKeyDown(event: KeyboardEvent<HTMLDivElement>, issueId: string) {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    toggleIssue(issueId);
+  }
+
+  function submitClose(event: MouseEvent<HTMLButtonElement>, issueId: string) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const data = new FormData();
+    data.set("id", issueId);
+    setClosingId(issueId);
+    startTransition(async () => {
+      const result = await closeIssue(data);
+      setClosingId(null);
+      if (result.ok) {
+        router.refresh();
+      }
+    });
+  }
 
   return (
     <section className="panel issues-panel">
@@ -83,9 +114,17 @@ export function IssuesList({ issues, modules }: { issues: IssueRecord[]; modules
         <div className="issue-list">
           {filteredIssues.map((issue, index) => {
             const expanded = expandedId === issue.id;
+            const canClose = issue.status !== "Closed";
+            const closePending = pending && closingId === issue.id;
             return (
               <article className={`issue-card ${expanded ? "expanded" : ""}`} key={issue.id} style={{ "--i": index } as CSSProperties}>
-                <button className="issue-card-main" onClick={() => setExpandedId(expanded ? null : issue.id)} type="button">
+                <div
+                  className="issue-card-main"
+                  onClick={() => toggleIssue(issue.id)}
+                  onKeyDown={(event) => handleRowKeyDown(event, issue.id)}
+                  role="button"
+                  tabIndex={0}
+                >
                   <span className="issue-id">{issue.id}</span>
                   <span className="issue-title">{issue.title}</span>
                   <span className="muted">{issue.moduleName || "No module"}</span>
@@ -93,8 +132,16 @@ export function IssuesList({ issues, modules }: { issues: IssueRecord[]; modules
                   <StatusChip status={issue.status} />
                   <span className={`chip ${issue.priority.toLowerCase()}`}>{issue.priority}</span>
                   <span className="mono">{formatDate(issue.updatedAt)}</span>
+                  {canClose ? (
+                    <button className="button close-issue-button" disabled={closePending} onClick={(event) => submitClose(event, issue.id)} type="button">
+                      <CheckCircle2 size={15} />
+                      {closePending ? "Closing" : "Close"}
+                    </button>
+                  ) : (
+                    <span className="closed-spacer" />
+                  )}
                   <span className="button ghost collapse-control">{expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}</span>
-                </button>
+                </div>
                 {expanded ? (
                   <div className="issue-expanded">
                     <IssueDetail issue={issue} modules={modules} />
