@@ -234,6 +234,41 @@ export async function updateIssue(formData: FormData): Promise<ActionState> {
   return { ok: true, message: `${id} updated.` };
 }
 
+export async function closeIssue(formData: FormData): Promise<ActionState> {
+  await requireSession();
+  const missing = dbMissing();
+  if (missing) return missing;
+
+  const id = normalizeText(formData.get("id"));
+  if (!id) {
+    return { ok: false, message: "Issue is required." };
+  }
+
+  await ensureSchema();
+  const timestamp = now();
+
+  try {
+    const result = await getClient().execute({
+      sql: `
+        UPDATE issues
+        SET status = 'Closed', updated_at = ?, closed_at = COALESCE(closed_at, ?)
+        WHERE id = ?
+      `,
+      args: [timestamp, timestamp, id]
+    });
+
+    if (Number(result.rowsAffected || 0) === 0) {
+      return { ok: false, message: `${id} was not found.` };
+    }
+  } catch (error) {
+    console.error("Issue close failed", error);
+    return { ok: false, message: "Issue could not be closed." };
+  }
+
+  revalidateIssueViews();
+  return { ok: true, message: `${id} closed.` };
+}
+
 export async function addAttachments(formData: FormData): Promise<ActionState> {
   await requireSession();
   const missing = dbMissing();
