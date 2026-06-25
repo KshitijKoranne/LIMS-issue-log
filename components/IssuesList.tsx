@@ -130,7 +130,7 @@ export function IssuesList({ issues, modules }: { issues: IssueRecord[]; modules
                   <span className="muted">{issue.moduleName || "No module"}</span>
                   <span>{issue.location}</span>
                   {canClose ? (
-                    <button className="button" disabled={closePending} onClick={(event) => submitClose(event, issue.id)} type="button">
+                    <button className="button collapse-control" disabled={closePending} onClick={(event) => submitClose(event, issue.id)} type="button">
                       <CheckCircle2 size={15} />
                       {closePending ? "Closing" : "Close"}
                     </button>
