@@ -129,17 +129,16 @@ export function IssuesList({ issues, modules }: { issues: IssueRecord[]; modules
                   <span className="issue-title">{issue.title}</span>
                   <span className="muted">{issue.moduleName || "No module"}</span>
                   <span>{issue.location}</span>
-                  <StatusChip status={issue.status} />
-                  <span className={`chip ${issue.priority.toLowerCase()}`}>{issue.priority}</span>
-                  <span className="mono">{formatDate(issue.updatedAt)}</span>
                   {canClose ? (
-                    <button className="button close-issue-button" disabled={closePending} onClick={(event) => submitClose(event, issue.id)} type="button">
+                    <button className="button" disabled={closePending} onClick={(event) => submitClose(event, issue.id)} type="button">
                       <CheckCircle2 size={15} />
                       {closePending ? "Closing" : "Close"}
                     </button>
                   ) : (
-                    <span className="closed-spacer" />
+                    <StatusChip status={issue.status} />
                   )}
+                  <span className={`chip ${issue.priority.toLowerCase()}`}>{issue.priority}</span>
+                  <span className="mono">{formatDate(issue.updatedAt)}</span>
                   <span className="button ghost collapse-control">{expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}</span>
                 </div>
                 {expanded ? (
