@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ImagePlus, Save, Trash2 } from "lucide-react";
-import { addAttachments, deleteAttachment, getIssueAttachments, updateIssue } from "@/app/actions";
+import { CheckCircle2, ImagePlus, Save, Trash2 } from "lucide-react";
+import { addAttachments, closeIssue, deleteAttachment, getIssueAttachments, updateIssue } from "@/app/actions";
 import type { AttachmentRecord, IssueRecord, ModuleRecord } from "@/lib/types";
 import { StatusChip } from "./StatusChip";
 
@@ -89,6 +89,16 @@ export function IssueDetail({ issue, modules }: { issue: IssueRecord | null; mod
     });
   }
 
+  function submitClose() {
+    const data = new FormData();
+    data.set("id", currentIssue.id);
+    startTransition(async () => {
+      const result = await closeIssue(data);
+      setMessage(result.message);
+      if (result.ok) router.refresh();
+    });
+  }
+
   async function submitAttachments(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData();
@@ -122,6 +132,8 @@ export function IssueDetail({ issue, modules }: { issue: IssueRecord | null; mod
       }
     });
   }
+
+  const success = message.includes("updated") || message.includes("added") || message.includes("deleted") || message.includes("closed");
 
   return (
     <section className="panel">
@@ -189,6 +201,13 @@ export function IssueDetail({ issue, modules }: { issue: IssueRecord | null; mod
           </button>
         </form>
 
+        {currentIssue.status !== "Closed" ? (
+          <button className="button full" disabled={pending} onClick={submitClose} type="button">
+            <CheckCircle2 size={16} />
+            Close issue
+          </button>
+        ) : null}
+
         <form className="form-grid" onSubmit={submitAttachments}>
           <label className="dropzone" htmlFor={`detailScreenshots-${currentIssue.id}`}>
             <ImagePlus size={18} />
@@ -235,7 +254,7 @@ export function IssueDetail({ issue, modules }: { issue: IssueRecord | null; mod
           </div>
         ) : null}
 
-        {message ? <div className={message.includes("updated") || message.includes("added") || message.includes("deleted") ? "success" : "error"}>{message}</div> : null}
+        {message ? <div className={success ? "success" : "error"}>{message}</div> : null}
       </div>
     </section>
   );
